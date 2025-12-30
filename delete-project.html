@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Confirmation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Delete tugma */
+        .delete-btn {
+            background: #e63946;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #d62828;
+        }
+
+        /* Modal fon */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Modal oynasi */
+        .modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            width: 350px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal p {
+            margin-bottom: 25px;
+            color: #666;
+            font-size: 15px;
+        }
+
+        /* Tugmalar */
+        .btns {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btns button {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .cancel-btn {
+            background: #ddd;
+            color: #333;
+        }
+
+        .cancel-btn:hover {
+            background: #bbb;
+        }
+
+        .confirm-btn {
+            background: #e63946;
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background: #d62828;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Delete tugma -->
+    <button class="delete-btn" onclick="openModal()">Delete Project</button>
+
+    <!-- Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ O‘chirishni tasdiqlang</h2>
+            <p>Rostan ham ushbu loyihani o‘chirmoqchimisiz?<br>Bu amal qaytarilmaydi.</p>
+            <div class="btns">
+                <button class="cancel-btn" onclick="closeModal()">Bekor qilish</button>             
+                <form method="post" action="/delete/{{ delete.pk }}/">
+                    {% csrf_token %}
+                    <button type="submit" class="confirm-btn">Ha, o‘chir</button>
+                </form>
+            
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById("deleteModal").style.display = "flex";
+        }
+        function closeModal() {
+            document.getElementById("deleteModal").style.display = "none";
+        }
+    </script>
+</body>
+
+</html>

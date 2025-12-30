@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart</title>
+  <link rel="stylesheet" href="{% static 'css/cart.css' %}">
+  <style>
+    a {
+      text-decoration: none;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f6f8fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    .open-btn {
+      background: linear-gradient(90deg, #6366f1, #0ea5a4);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      margin: 20px;
+      cursor: pointer;
+    }
+
+    .drawer {
+      position: fixed;
+      right: -400px;
+      top: 0;
+      width: 380px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+      transition: 0.4s;
+      z-index: 2000;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .drawer.open {
+      right: 0;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+    }
+
+    #overlay.show {
+      display: block;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .cart-header h2 {
+      margin: 0;
+      color: #333;
+    }
+
+    .close-btn {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 0;
+    }
+
+    .cart-item img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 15px;
+    }
+
+    .item-info h3 {
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .item-info p {
+      font-size: 13px;
+      color: gray;
+      margin: 3px 0;
+    }
+
+    .bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .remove {
+      border: none;
+      background: #ef4444;
+      color: white;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .cart-footer {
+      border-top: 1px solid #e5e7eb;
+      margin-top: 20px;
+      padding-top: 20px;
+    }
+
+    .subtotal {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .checkout-btn,
+    .continue-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .checkout-btn {
+      background: linear-gradient(90deg, #6366f1, #0ea5a4);
+    }
+
+    .continue-btn {
+      background: #475569;
+    }
+
+    .tax-text {
+      color: gray;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    /* Hero styles moved to static/css/cart.css */
+  </style>
+</head>
+
+<body>
+
+  <button id="openCart" class="open-btn">🛒 Open Cart</button>
+
+  <a href="/"> <button id="openDetail" class="open-btn">📂  Bosh sahifaga o'tish</button></a>
+
+  <div id="overlay"></div>
+
+  <div id="cartDrawer" class="drawer">
+    <div class="cart-header">
+      <h2>Shopping Cart</h2>
+      <button id="closeCart" class="close-btn">✖</button>
+    </div>
+
+    <div id="cartItemsContainer" class="cart-items">
+      {% for item in cart_items %}
+      <div class="cart-item">
+        <img src="{{ item.product.image.url }}" alt="...">
+        <div class="item-info">
+          <h3>{{ item.product.name }}</h3>
+          <p class="desc">{{ item.product.descriptions }}</p>
+          <div class="bottom">
+            <span>${{ item.total_price }}</span>
+            <button class="remove">Remove</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="cart-footer">
+      <div class="subtotal">
+        <p>Subtotal</p>
+        <p id="subtotal">${{ subtotal }}</p>
+      </div>
+      <p class="tax-text">Shipping and taxes calculated at checkout.</p>
+      <a href="{% url 'checkout' %}" class="checkout-btn" id="checkoutBtn">Checkout</a>
+      <button class="continue-btn" id="continueBtn">Continue Shopping →</button>
+    </div>
+  </div>
+
+  <script>
+    const drawer = document.getElementById("cartDrawer");
+    const overlay = document.getElementById("overlay");
+    const openBtn = document.getElementById("openCart");
+    const closeBtn = document.getElementById("closeCart");
+    const cartContainer = document.getElementById("cartItemsContainer");
+    const subtotalElement = document.getElementById("subtotal");
+
+    function getCart() {
+      return JSON.parse(localStorage.getItem("cart")) || [];
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+
+    // Yangilash: subtotal hisoblash va remove tugmalar uchun eventlarni qayta bog'lash
+    function updateCart() {
+      // 1) Subtotalni DOM orqali hisoblaymiz (kart ichidagi narx matnidan $ olib)
+      const items = cartContainer.querySelectorAll('.cart-item');
+      let subtotal = 0;
+      items.forEach(item => {
+        // span ichidagi pul matni: "$123.45" deb taxmin qilinadi
+        const priceSpan = item.querySelector('.bottom > span');
+        if (priceSpan) {
+          const txt = priceSpan.textContent.trim().replace(/[^0-9.\-]/g, '');
+          const val = parseFloat(txt) || 0;
+          subtotal += val;
+        }
+      });
+      subtotalElement.textContent = '$' + subtotal.toFixed(2);
+
+      // 2) remove tugmalarga eventlarni ulang (duplikat bo'lmasligi uchun oldin oʻchiramiz)
+      const removeButtons = cartContainer.querySelectorAll('.remove');
+      removeButtons.forEach(btn => {
+        // agar allaqachon listener qo'yilgan bo'lsa duplicate bo'lishi mumkin,
+        // shuning uchun dataset flag yordamida tekshiramiz
+        if (btn.dataset.listenerAttached === "1") return;
+        btn.dataset.listenerAttached = "1";
+
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          const cartItem = this.closest('.cart-item');
+          if (!cartItem) return;
+
+          const productId = cartItem.dataset.productId; // agar templateda berilsa
+
+          // Agar serverda o'chirish uchun productId mavjud bo'lsa — fetch yuboramiz
+          if (productId) {
+            fetch(`/remove-from-cart/${productId}/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+              },
+              credentials: 'same-origin' // CSRF token cookie bilan ishlashi uchun
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  cartItem.remove();
+                  updateCart();
+                } else {
+                  alert('Failed to remove product from server.');
+                }
+              })
+              .catch(err => {
+                console.error('Remove error:', err);
+                alert('Error removing product. Check console.');
+              });
+          } else {
+            // Agar productId yo'q bo'lsa (faqat frontend-localStorage usuli),
+            // elementni DOMdan olib tashlaymiz va localStorage yangilaymiz
+            const name = cartItem.querySelector('.item-info h3')?.textContent?.trim();
+            cartItem.remove();
+            // update localStorage: oddiy muqobil, product nomiga qarab filter
+            const cart = getCart().filter(ci => {
+              // agar localStorage elementlarda name maydoni bo'lsa ishlaydi,
+              // aks holda sizga id bilan ishlashni tavsiya qilaman
+              if (!ci.name) return true;
+              return ci.name !== name;
+            });
+            saveCart(cart);
+            updateCart();
+          }
+        });
+      });
+    }
+
+    // drawer ochish/yonish
+    openBtn.addEventListener("click", () => {
+      drawer.classList.add("open");
+      overlay.classList.add("show");
+      updateCart();
+    });
+
+    closeBtn.addEventListener("click", () => {
+      drawer.classList.remove("open");
+      overlay.classList.remove("show");
+    });
+
+    overlay.addEventListener("click", () => {
+      drawer.classList.remove("open");
+      overlay.classList.remove("show");
+    });
+
+    // Sahifa yuklanganda cart UI ni yangilab olamiz
+    document.addEventListener('DOMContentLoaded', function () {
+      updateCart();
+    });
+  </script>
+
+
+

@@ -1,0 +1,153 @@
+{% if user.is_superuser %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Product</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<style>
+    /* General reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 16px;
+        width: 400px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 1s ease;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .product-form label {
+        display: block;
+        margin: 10px 0 5px;
+        font-weight: bold;
+        color: #444;
+    }
+
+    .product-form input,
+    .product-form select,
+    .product-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        outline: none;
+        transition: border 0.3s;
+    }
+
+    .product-form input:focus,
+    .product-form select:focus,
+    .product-form textarea:focus {
+        border: 1px solid #667eea;
+    }
+
+    textarea {
+        resize: none;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .btn-submit,
+    .btn-reset {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background: #5a67d8;
+    }
+
+    .btn-reset {
+        background: #e53e3e;
+        color: white;
+    }
+
+    .btn-reset:hover {
+        background: #c53030;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<body>
+    <div class="container">
+        <h1>Update Product</h1>
+        <form method="post" action="{% url 'update_product' update.id %}" enctype="multipart/form-data"
+            class="product-form">
+            {% csrf_token %}
+
+            <label for="sku">SKU (Product Code)</label>
+            <input type="text" id="sku" name="sku" value="{{ update.sku }}" required>
+
+            <label for="name">Product Name</label>
+            <input type="text" id="name" name="name" value="{{ update.name }}" required>
+
+            <label for="price">Price ($)</label>
+            <input type="number" id="price" name="price" value="{{ update.price }}" required>
+
+            <label for="stock">Stock Quantity</label>
+            <input type="number" id="stock" name="stock" value="{{ update.stock }}" required>
+
+            <label for="desc">Description</label>
+            <textarea id="desc" name="description" rows="4" required>{{ update.description }}</textarea>
+
+            <label for="image">Product Image</label>
+            <input type="file" id="image" name="image" accept="image/*">
+
+            <div class="buttons">
+                <button type="submit" class="btn-submit">Update Product</button>
+                <a href="{% url 'products' %}" class="btn-reset">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
+{% endif %}
